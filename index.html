@@ -4,36 +4,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Albino Life: Sinister Edition</title>
-    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #050505; --card: #111; --acc: #8b5cf6; --text: #e2e8f0; --danger: #ef4444; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; overflow: hidden; }
         #root { width: 100%; max-width: 500px; height: 100vh; background: var(--bg); display: flex; flex-direction: column; border-right: 1px solid #222; position: relative; }
         
         .header { padding: 15px; background: var(--card); border-bottom: 2px solid var(--acc); }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
         .stat-box { font-size: 10px; color: #888; text-transform: uppercase; }
-        .bar { height: 4px; background: #222; border-radius: 2px; margin-top: 4px; }
+        .bar { height: 6px; background: #222; border-radius: 3px; margin-top: 4px; overflow: hidden; }
         .fill { height: 100%; transition: 0.4s; }
 
-        .logs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column-reverse; gap: 8px; font-size: 13px; }
-        .log-item { padding: 10px; border-radius: 8px; background: #0f172a; border-left: 3px solid #334155; }
-        .log-sinister { border-color: var(--danger); background: #2d0a0a; }
+        .logs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column-reverse; gap: 8px; font-size: 12px; }
+        .log-item { padding: 10px; border-radius: 8px; background: #0f172a; border: 1px solid #1e293b; color: #cbd5e1; }
+        .log-sinister { border-color: var(--danger); background: #2d0a0a; color: #fca5a5; }
 
-        .actions-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 15px; background: var(--card); }
-        .btn { padding: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 6px; cursor: pointer; font-size: 11px; }
-        .btn:hover { background: var(--acc); }
-        .btn-age { grid-column: span 2; background: #fff; color: #000; font-weight: bold; font-size: 14px; margin-top: 5px; }
+        .actions-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 15px; background: var(--card); border-top: 1px solid #222; }
+        .btn { padding: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn:hover { background: var(--acc); border-color: #fff; }
+        .btn-age { grid-column: span 2; background: #fff; color: #000; font-size: 14px; margin-top: 5px; height: 50px; }
 
-        .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000; padding: 30px; display: flex; flex-direction: column; }
-        .option { padding: 15px; border: 1px solid #444; margin-top: 10px; border-radius: 8px; cursor: pointer; }
-        .option:hover { border-color: var(--acc); background: #111; }
+        .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000; padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+        .option { padding: 15px; border: 1px solid #444; margin-top: 10px; border-radius: 8px; cursor: pointer; background: #0a0a0a; }
+        .option:hover { border-color: var(--acc); background: #151515; }
+        h2 { margin-bottom: 15px; color: var(--acc); }
     </style>
 </head>
+<body>
+    <div id="root">Cargando sistema...</div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [p, setP] = useState({
+                age: 0, money: 50, skin: 100, health: 100, qi: 50, strength: 10, 
+                happiness: 80, libido: 30, job: "Nenhum", dead: false
+            });
+            const [logs, setLogs] = useState([{ m: "Você nasceu. A luz dói, mas você está aqui.", s: false }]);
+            const [view, setView] = useState(null);
+
+            const addLog = (m, s = false) => setLogs(prev => [{ m, s }, ...prev]);
+
+            const update = (obj) => {
+                setP(prev => {
+                    let next = { ...prev, ...obj };
+                    ['skin', 'health', 'happiness', 'libido', 'qi', 'strength'].forEach(k => {
+                        if(next[k] !== undefined) next[k] = Math.max(0, Math.min(100, next[k]));
+                    });
+                    return next;
+                });
+            };
+
+            const ageUp = () => {
+                if(p.dead) return;
+                let newAge = p.age + 1;
+                let salary = p.job === "Dev" ? 1200 : p.job === "Vendedor" ? 300 : p.job === "CEO" ? 8000 : 0;
+                
+                update({ age: newAge, money: p.money + salary, skin: p.skin - 7, happiness: p.happiness - 5 });
+                
+                if (Math.random() < 0.3) triggerSinisterEvent(newAge);
+                if (p.skin <= 0 || p.health <= 0) { update({ dead: true }); addLog("💀 SEU CORPO CEDEU AO SOL E À EXAUSTÃO.", true); }
+            };
+
+            const triggerSinisterEvent = (age) => {
+                const events = [
+                    { t: "BECU ESCURO", d: "Três homens te cercaram. Eles querem seu dinheiro e seus órgãos.", o: [
+                        { n: "Lutar (Requer Força > 30)", f: () => p.strength > 30 ? addLog("Você os quebrou no soco.") : update({health: -60, money: 0}) },
+                        { n: "Correr desesperadamente", f: () => update({health: -20, happiness: -30}) }
+                    ]},
+                    { t: "OBSESSÃO", d: "Uma pessoa estranha te persegue há quadras dizendo que sua pele é mágica.", o: [
+                        { n: "Chamar a polícia", f: () => addLog("A polícia ignorou seu chamado.") },
+                        { n: "Confrontar", f: () => update({strength: 2, happiness: -10}) }
+                    ]}
+                ];
+                setView({ type: 'event', data: events[Math.floor(Math.random()*events.length)] });
+            };
+
+            return (
+                <div id="root">
+                    <div className="header">
+                        <div style={{display:'flex', justifyContent:'space-between', fontWeight:'bold'}}>
+                            <span>ANO: {p.age}</span>
+                            <span style={{color:'#10b981'}}>R$ {p.money}</span>
+                        </div>
+                        <div className="stats-grid">
+                            <div className="stat-box">PELE <div className="bar"><div className="fill" style={{width:`${p.skin}%`, background:'#ef4444'}}></div></div></div>
+                            <div className="stat-box">QI <div className="bar"><div className="fill" style={{width:`${p.qi}%`, background:'#3b82f6'}}></div></div></div>
+                            <div className="stat-box">FORÇA <div className="bar"><div className="fill" style={{width:`${p.strength}%`, background:'#a855f7'}}></div></div></div>
+                        </div>
+                    </div>
+
+                    <div className="logs">
+                        {logs.map((l, i) => <div key={i} className={`log-item ${l.s ? 'log-sinister' : ''}`}>{l.m}</div>)}
+                    </div>
+
+                    <div className="actions-menu">
+                        <button className="btn" onClick={() => setView({type:'jobs'})}>💼 CARREIRA</button>
+                        <button className="btn" onClick={() => setView({type:'training'})}>🏋️ TREINAR</button>
+                        <button className="btn" onClick={() => setView({type:'night'})}>🌃 NOITE</button>
+                        <button className="btn" onClick={() => update({skin: 100, money: p.money - 150})}>🧴 PROTETOR</button>
+                        <button className="btn btn-age" onClick={ageUp} disabled={p.dead}>PRÓXIMO ANO</button>
+                    </div>
+
+                    {view?.type === 'jobs' && (
+                        <div className="modal">
+                            <h2>CARREIRAS</h2>
+                            <div className="option" onClick={() => { if(p.qi > 60) { update({job: "Dev"}); setView(null); } else alert("QI baixo!"); }}>Dev Júnior (60 QI)</div>
+                            <div className="option" onClick={() => { if(p.qi > 95) { update({job: "CEO"}); setView(null); } else alert("QI insuficiente!"); }}>CEO Tech (95 QI)</div>
+                            <div className="option" onClick={() => setView(null)}>FECHAR</div>
+                        </div>
+                    )}
+
+                    {view?.type === 'training' && (
+                        <div className="modal">
+                            <h2>EVOLUÇÃO</h2>
+                            <div className="option" onClick={() => { update({qi: p.qi + 7, happiness: -15}); setView(null); addLog("Sua mente expandiu, mas você está exausto."); }}>ESTUDAR (+QI)</div>
+                            <div className="option" onClick={() => { update({strength: p.strength + 8, health: -5}); setView(null); addLog("Você aprendeu a bater onde dói."); }}>APRENDER LUTAR (+FORÇA)</div>
+                            <div className="option" onClick={() => setView(null)}>FECHAR</div>
+                        </div>
+                    )}
+
+                    {view?.type === 'night' && (
+                        <div className="modal">
+                            <h2>SUBMUNDO</h2>
+                            <div className="option" onClick={() => { if(p.money >= 500) { update({money: -500, libido: -60, happiness: 50}); addLog("Noite selvagem com acompanhante."); setView(null); } else alert("Sem dinheiro!"); }}>ACOMPANHANTE (R$ 500)</div>
+                            <div className="option" onClick={() => { update({happiness: 15}); setView(null); addLog("Você tentou falar com alguém, mas te acharam estranho."); }}>PROCURAR AMOR</div>
+                            <div className="option" onClick={() => setView(null)}>FECHAR</div>
+                        </div>
+                    )}
+
+                    {view?.type === 'event' && (
+                        <div className="modal">
+                            <h2 style={{color: 'var(--danger)'}}>{view.data.t}</h2>
+                            <p style={{lineHeight:'1.5'}}>{view.data.d}</p>
+                            {view.data.o.map((o, i) => (
+                                <div key={i} className="option" onClick={() => { o.f(); setView(null); }}>{o.n}</div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
 <body>
     <div id="root"></div>
 
