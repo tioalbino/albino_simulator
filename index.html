@@ -3,242 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Albino Life: Extreme Performance</title>
+    <title>Albino Life: Instant Load</title>
     <style>
-        :root {
-            --bg: #000000;
-            --card: #121214;
-            --accent: #a855f7;
-            --text-main: #ffffff;
-            --text-dim: #a1a1aa;
-            --danger: #ff4e4e;
-            --success: #22c55e;
-        }
-
+        :root { --bg: #000; --card: #111; --acc: #8b5cf6; --txt: #eee; --danger: #ff4e4e; --success: #22c55e; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background: var(--bg); 
-            color: var(--text-main); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex; justify-content: center; height: 100vh; overflow: hidden;
-        }
+        body { background: var(--bg); color: var(--txt); font-family: sans-serif; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        #app { width: 100%; max-width: 500px; display: flex; flex-direction: column; position: relative; }
+        
+        /* Header Fixo */
+        .header { padding: 15px; background: var(--card); border-bottom: 2px solid var(--acc); }
+        .top { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .stat-box { font-size: 10px; color: #888; }
+        .bar { height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+        .fill { height: 100%; width: 100%; transform-origin: left; transition: transform 0.3s; }
 
-        #app {
-            width: 100%; max-width: 480px; height: 100%;
-            background: var(--bg); display: flex; flex-direction: column;
-            position: relative; border-right: 1px solid #222;
-        }
+        /* Feed de Eventos */
+        #logs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column-reverse; gap: 8px; }
+        .log { padding: 12px; border-radius: 10px; background: #111; border: 1px solid #222; font-size: 13px; animation: in 0.2s; }
+        .sinister { border-color: var(--danger); background: #200; color: #fbb; }
+        @keyframes in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Header Premium */
-        .top-bar { padding: 20px; background: rgba(18, 18, 20, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid #27272a; }
-        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .money { color: var(--success); font-weight: 800; font-size: 1.2rem; }
-        .age-tag { background: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        /* Controles */
+        .actions { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #000; }
+        .btn { padding: 15px; border: 1px solid #333; background: #161616; color: #fff; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn:active { background: var(--acc); transform: scale(0.98); }
+        .btn-age { grid-column: span 2; background: #fff; color: #000; font-size: 14px; }
 
-        /* Stats com Aceleração de Hardware */
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .stat-card { background: #1c1c1f; padding: 8px; border-radius: 12px; }
-        .stat-label { font-size: 0.65rem; color: var(--text-dim); margin-bottom: 4px; display: block; }
-        .bar-bg { height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
-        .bar-fill { 
-            height: 100%; width: 100%; transform-origin: left;
-            transition: transform 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67); 
-        }
-
-        /* Feed de Notícias (Logs) */
-        #log-feed { 
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column-reverse; gap: 12px;
-            scrollbar-width: none;
-        }
-        .log-card { 
-            background: var(--card); padding: 15px; border-radius: 16px;
-            border: 1px solid #27272a; font-size: 0.9rem; line-height: 1.4;
-            animation: slideUp 0.3s ease-out;
-        }
-        .log-sinister { border-color: var(--danger); background: #251212; color: #ffbcbc; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Botões Estilo App */
-        .controls { 
-            padding: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-            background: var(--card); border-top: 1px solid #27272a;
-        }
-        .btn {
-            background: #27272a; border: none; color: white; padding: 12px 5px;
-            border-radius: 12px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; gap: 5px;
-            transition: transform 0.1s, background 0.2s;
-        }
-        .btn:active { transform: scale(0.92); background: #3f3f46; }
-        .btn-main {
-            grid-column: span 4; background: white; color: black;
-            font-size: 1rem; padding: 18px; margin-top: 5px;
-        }
-        .btn-main:disabled { background: #333; color: #777; }
-
-        /* Modal Ultra Rápido */
-        .modal-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 100; display: none; flex-direction: column; justify-content: center; padding: 30px;
-        }
-        .modal-box { background: var(--card); border: 1px solid var(--accent); border-radius: 24px; padding: 25px; }
-        .modal-title { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); font-weight: 900; }
-        .opt-btn {
-            width: 100%; padding: 16px; background: #1c1c1f; border: 1px solid #333;
-            color: white; border-radius: 14px; margin-top: 12px; text-align: left;
-            font-weight: 600; cursor: pointer;
-        }
-        .opt-btn:hover { border-color: var(--accent); }
+        /* Modais */
+        .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 10; padding: 30px; display: none; flex-direction: column; justify-content: center; }
+        .opt { padding: 18px; border: 1px solid #444; margin-top: 10px; border-radius: 10px; background: #111; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div class="top-bar">
-        <div class="user-info">
-            <span class="age-tag" id="ui-age">0 ANOS</span>
-            <span class="money" id="ui-money">R$ 50</span>
+    <div class="header">
+        <div class="top">
+            <span id="u-age">ANO: 0</span>
+            <span id="u-cash" style="color:var(--success)">R$ 50</span>
         </div>
-        <div class="stats-container">
-            <div class="stat-card">
-                <span class="stat-label">PELE</span>
-                <div class="bar-bg"><div id="bar-skin" class="bar-fill" style="background:var(--danger); transform: scaleX(1);"></div></div>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">QI</span>
-                <div class="bar-bg"><div id="bar-qi" class="bar-fill" style="background:#3b82f6; transform: scaleX(0.5);"></div></div>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">FORÇA</span>
-                <div class="bar-bg"><div id="bar-str" class="bar-fill" style="background:var(--accent); transform: scaleX(0.1);"></div></div>
-            </div>
+        <div class="stats">
+            <div class="stat-box">PELE <div class="bar"><div id="b-skin" class="fill" style="background:var(--danger)"></div></div></div>
+            <div class="stat-box">QI <div class="bar"><div id="b-qi" class="fill" style="background:#3b82f6; transform:scaleX(0.5)"></div></div></div>
+            <div class="stat-box">FORÇA <div class="bar"><div id="b-str" class="fill" style="background:var(--acc); transform:scaleX(0.1)"></div></div></div>
         </div>
     </div>
 
-    <div id="log-feed"></div>
+    <div id="logs"></div>
 
-    <div class="controls">
-        <button class="btn" onclick="openMenu('jobs')">💼<span>JOB</span></button>
-        <button class="btn" onclick="openMenu('train')">🏋️<span>TREINO</span></button>
-        <button class="btn" onclick="openMenu('night')">🌃<span>NOITE</span></button>
-        <button class="btn" onclick="buyProtection()">🧴<span>CREME</span></button>
-        <button class="btn btn-main" id="btn-age" onclick="ageUp()">PRÓXIMO ANO</button>
+    <div class="actions">
+        <button class="btn" onclick="menu('jobs')">💼 CARREIRA</button>
+        <button class="btn" onclick="menu('train')">🏋️ TREINAR</button>
+        <button class="btn" onclick="menu('night')">🌃 NOITE</button>
+        <button class="btn" onclick="buy()">🧴 PROTETOR</button>
+        <button class="btn btn-age" onclick="age()">PRÓXIMO ANO</button>
     </div>
 
-    <div id="modal" class="modal-overlay">
-        <div class="modal-box">
-            <h2 id="m-title" class="modal-title">Título</h2>
-            <p id="m-desc" style="color:var(--text-dim); margin-bottom:20px;"></p>
-            <div id="m-opts"></div>
-            <button class="opt-btn" style="background:transparent; text-align:center; color:var(--text-dim)" onclick="closeModal()">FECHAR</button>
-        </div>
+    <div id="m" class="modal">
+        <h2 id="mt" style="color:var(--acc); margin-bottom:10px"></h2>
+        <p id="md" style="margin-bottom:20px; font-size:14px; color:#aaa"></p>
+        <div id="mo"></div>
+        <button class="btn" style="margin-top:20px" onclick="closeM()">FECHAR</button>
     </div>
 </div>
 
 <script>
-    let p = { age: 0, money: 50, skin: 100, qi: 50, str: 10, job: "Nenhum", dead: false };
+    // Sistema Lite - Sem carregamento externo
+    let p = { age: 0, cash: 50, skin: 100, qi: 50, str: 10, job: "Nenhum", dead: false };
 
-    function updateUI() {
-        document.getElementById('ui-age').innerText = `${p.age} ANOS`;
-        document.getElementById('ui-money').innerText = `R$ ${p.money}`;
-        document.getElementById('bar-skin').style.transform = `scaleX(${p.skin/100})`;
-        document.getElementById('bar-qi').style.transform = `scaleX(${p.qi/100})`;
-        document.getElementById('bar-str').style.transform = `scaleX(${p.str/100})`;
-        
-        if(p.dead) {
-            const btn = document.getElementById('btn-age');
-            btn.innerText = "FALECIDO";
-            btn.disabled = true;
-        }
+    function up() {
+        document.getElementById('u-age').innerText = `ANO: ${p.age}`;
+        document.getElementById('u-cash').innerText = `R$ ${p.cash}`;
+        document.getElementById('b-skin').style.transform = `scaleX(${p.skin/100})`;
+        document.getElementById('b-qi').style.transform = `scaleX(${p.qi/100})`;
+        document.getElementById('b-str').style.transform = `scaleX(${p.str/100})`;
     }
 
-    function addLog(msg, sinister = false) {
-        const feed = document.getElementById('log-feed');
-        const div = document.createElement('div');
-        div.className = `log-card ${sinister ? 'log-sinister' : ''}`;
-        div.innerHTML = `<strong>Ano ${p.age}:</strong> ${msg}`;
-        feed.appendChild(div);
-        if(feed.childNodes.length > 20) feed.removeChild(feed.firstChild);
+    function log(m, s = false) {
+        const l = document.getElementById('logs');
+        const d = document.createElement('div');
+        d.className = `log ${s ? 'sinister' : ''}`;
+        d.innerHTML = `<strong>Ano ${p.age}:</strong> ${m}`;
+        l.appendChild(d);
     }
 
-    function ageUp() {
+    function age() {
         if(p.dead) return;
         p.age++;
-        
-        // Economia rápida
-        if(p.job === "Dev") p.money += 1500;
-        else if(p.job === "CEO") p.money += 10000;
-
-        p.skin -= 10; // Desgaste solar
-
-        if(Math.random() < 0.3) triggerEvent();
-        if(p.skin <= 0) { p.dead = true; addLog("A exposição solar causou danos irreversíveis. Sua jornada acabou.", true); }
-        
-        updateUI();
+        if(p.job === "Dev") p.cash += 1200;
+        p.skin -= 10;
+        if(Math.random() < 0.3) sinister();
+        if(p.skin <= 0) { p.dead = true; log("O sol venceu. Seu corpo parou.", true); }
+        up();
     }
 
-    function buyProtection() {
-        if(p.money >= 100) {
-            p.money -= 100; p.skin = 100;
-            addLog("🧴 Proteção FPS 100 aplicada. Pele regenerada.");
-            updateUI();
-        }
+    function buy() {
+        if(p.cash >= 100) { p.cash -= 100; p.skin = 100; log("Pele protegida."); up(); }
     }
 
-    function triggerEvent() {
+    function sinister() {
         const evs = [
-            { t: "AMEAÇA", d: "Criminosos te viram no escuro. Eles acham que você é um alvo fácil.", o: [
-                { n: "Usar Força", a: () => p.str > 40 ? addLog("Você lutou como um leão.") : (p.money=0, p.skin-=20, addLog("Você foi espancado.", true)) },
-                { n: "Fugir", a: () => addLog("Você escapou por pouco.") }
-            ]},
-            { t: "ESTRANHO", d: "Um colecionador de 'raridades' te ofereceu dinheiro para segui-lo.", o: [
-                { n: "Aceitar (R$ 500)", a: () => { p.money += 500; p.skin -= 30; addLog("Foi uma noite traumática, mas você recebeu.", true); } },
-                { n: "Recusar", a: () => addLog("Você se sente observado.") }
+            { t: "EMBOSCADA", d: "Alguém te seguiu até o beco.", o: [
+                { n: "Lutar", a: () => p.str > 30 ? log("Você o nocauteou!") : (p.cash=0, log("Você foi roubado.", true)) },
+                { n: "Correr", a: () => log("Você escapou.") }
             ]}
         ];
-        const e = evs[Math.floor(Math.random()*evs.length)];
-        showModal(e.t, e.d, e.o);
+        const e = evs[0];
+        showM(e.t, e.d, e.o);
     }
 
-    function openMenu(type) {
-        const menus = {
-            jobs: { t: "CARREIRA", d: "Seu QI define suas chances.", o: [
-                { n: "TI Jr (QI 60)", a: () => p.qi >= 60 ? p.job="Dev" : alert("QI baixo") },
-                { n: "CEO (QI 95)", a: () => p.qi >= 95 ? p.job="CEO" : alert("Incapaz") }
+    function menu(type) {
+        const opts = {
+            jobs: { t: "EMPREGO", d: "Escolha sua área:", o: [
+                { n: "Programador (QI 60)", a: () => p.qi >= 60 ? p.job = "Dev" : alert("QI baixo") },
+                { n: "Mendingo", a: () => p.job = "Rua" }
             ]},
-            train: { t: "TREINO", d: "Sacrifique tempo por habilidade.", o: [
-                { n: "Estudar (+10 QI)", a: () => { p.qi += 10; addLog("Sua mente está afiada."); } },
-                { n: "Lutar (+10 Força)", a: () => { p.str += 10; addLog("Seus punhos são armas."); } }
+            train: { t: "TREINO", d: "O que melhorar?", o: [
+                { n: "Estudar (+QI)", a: () => p.qi += 10 },
+                { n: "Malhar (+Força)", a: () => p.str += 10 }
             ]},
-            night: { t: "NOITE", d: "Desejos e perigos.", o: [
-                { n: "Acompanhante (R$ 500)", a: () => p.money >= 500 ? (p.money-=500, addLog("Noite de luxo.")) : alert("Pobre") },
-                { n: "Luta de Rua", a: () => { p.str += 5; p.skin -= 15; addLog("Você sangrou, mas aprendeu."); } }
+            night: { t: "NOITE", d: "O submundo...", o: [
+                { n: "Acompanhante (R$ 400)", a: () => p.cash >= 400 ? (p.cash -= 400, log("Noite de prazer.")) : alert("Sem grana") }
             ]}
         };
-        showModal(menus[type].t, menus[type].d, menus[type].o);
+        showM(opts[type].t, opts[type].d, opts[type].o);
     }
 
-    function showModal(t, d, opts) {
-        document.getElementById('m-title').innerText = t;
-        document.getElementById('m-desc').innerText = d;
-        const cont = document.getElementById('m-opts');
-        cont.innerHTML = '';
-        opts.forEach(o => {
-            const b = document.createElement('button');
-            b.className = 'opt-btn';
+    function showM(t, d, os) {
+        document.getElementById('mt').innerText = t;
+        document.getElementById('md').innerText = d;
+        const c = document.getElementById('mo');
+        c.innerHTML = '';
+        os.forEach(o => {
+            const b = document.createElement('div');
+            b.className = 'opt';
             b.innerText = o.n;
-            b.onclick = () => { o.a(); closeModal(); updateUI(); };
-            cont.appendChild(b);
+            b.onclick = () => { o.a(); closeM(); up(); };
+            c.appendChild(b);
         });
-        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('m').style.display = 'flex';
     }
 
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    function closeM() { document.getElementById('m').style.display = 'none'; }
 
-    updateUI();
-    addLog("O mundo é hostil para quem brilha demais. Sobreviva.");
+    log("A jornada começa.");
+    up();
 </script>
-
 </body>
 </html>
