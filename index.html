@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albino Life: Sinister Edition</title>
+    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #050505; --card: #111; --acc: #8b5cf6; --text: #e2e8f0; --danger: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
+        #root { width: 100%; max-width: 500px; height: 100vh; background: var(--bg); display: flex; flex-direction: column; border-right: 1px solid #222; position: relative; }
+        
+        .header { padding: 15px; background: var(--card); border-bottom: 2px solid var(--acc); }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .stat-box { font-size: 10px; color: #888; text-transform: uppercase; }
+        .bar { height: 4px; background: #222; border-radius: 2px; margin-top: 4px; }
+        .fill { height: 100%; transition: 0.4s; }
+
+        .logs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column-reverse; gap: 8px; font-size: 13px; }
+        .log-item { padding: 10px; border-radius: 8px; background: #0f172a; border-left: 3px solid #334155; }
+        .log-sinister { border-color: var(--danger); background: #2d0a0a; }
+
+        .actions-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 15px; background: var(--card); }
+        .btn { padding: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 6px; cursor: pointer; font-size: 11px; }
+        .btn:hover { background: var(--acc); }
+        .btn-age { grid-column: span 2; background: #fff; color: #000; font-weight: bold; font-size: 14px; margin-top: 5px; }
+
+        .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000; padding: 30px; display: flex; flex-direction: column; }
+        .option { padding: 15px; border: 1px solid #444; margin-top: 10px; border-radius: 8px; cursor: pointer; }
+        .option:hover { border-color: var(--acc); background: #111; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const [p, setP] = useState({
+                age: 0, money: 50, skin: 100, health: 100, qi: 50, strength: 10, 
+                happiness: 80, libido: 30, job: "Nenhum", partner: null, dead: false
+            });
+            const [logs, setLogs] = useState([{ m: "Você nasceu. O brilho do sol é seu maior inimigo.", s: false }]);
+            const [view, setView] = useState(null); // 'jobs', 'night', 'training', 'event'
+
+            const addLog = (m, s = false) => setLogs(prev => [{ m, s }, ...prev]);
+
+            const update = (obj) => {
+                setP(prev => {
+                    let next = { ...prev, ...obj };
+                    ['skin', 'health', 'happiness', 'libido', 'qi', 'strength'].forEach(k => {
+                        if(next[k] !== undefined) next[k] = Math.max(0, Math.min(100, next[k]));
+                    });
+                    return next;
+                });
+            };
+
+            const ageUp = () => {
+                if(p.dead) return;
+                let newAge = p.age + 1;
+                let salary = p.job === "Dev" ? 800 : p.job === "Vendedor" ? 200 : p.job === "CEO" ? 5000 : 0;
+                
+                update({ age: newAge, money: p.money + salary, skin: p.skin - 5, health: p.health - 2 });
+                
+                // IA de Eventos Sinistros
+                if (Math.random() < 0.25) triggerSinisterEvent(newAge);
+                if (p.skin <= 0 || p.health <= 0) { update({ dead: true }); addLog("💀 FIM DA LINHA.", true); }
+            };
+
+            const triggerSinisterEvent = (age) => {
+                const events = [
+                    { t: "Assalto Violento", d: "Um homem armado te parou no beco. Você mal consegue ver a arma dele.", o: [
+                        { n: "Reagir (Usa Força)", f: () => p.strength > 40 ? addLog("Você o nocauteou!") : update({health: -50, money: -p.money}) },
+                        { n: "Entregar tudo", f: () => update({money: 0, happiness: -20}) }
+                    ]},
+                    { t: "Seita Estranha", d: "Alguém disse que sua pele é 'sagrada' e tentou te levar para um carro.", o: [
+                        { n: "Correr", f: () => update({health: -10}) },
+                        { n: "Lutar", f: () => update({strength: 5, health: -20}) }
+                    ]}
+                ];
+                setView({ type: 'event', data: events[Math.floor(Math.random()*events.length)] });
+            };
+
+            return (
+                <div id="root">
+                    <div className="header">
+                        <div style={{display:'flex', justifyContent:'space-between'}}>
+                            <span style={{color:var(--acc)}}>IDADE: {p.age}</span>
+                            <span style={{color:'#10b981'}}>R$ {p.money}</span>
+                        </div>
+                        <div className="stats-grid">
+                            <div className="stat-box">Pele <div className="bar"><div className="fill" style={{width:`${p.skin}%`, background:'#ef4444'}}></div></div></div>
+                            <div className="stat-box">QI <div className="bar"><div className="fill" style={{width:`${p.qi}%`, background:'#3b82f6'}}></div></div></div>
+                            <div className="stat-box">Força <div className="bar"><div className="fill" style={{width:`${p.strength}%`, background:'#a855f7'}}></div></div></div>
+                        </div>
+                    </div>
+
+                    <div className="logs">
+                        {logs.map((l, i) => <div key={i} className={`log-item ${l.s ? 'log-sinister' : ''}`}>{l.m}</div>)}
+                    </div>
+
+                    <div className="actions-menu">
+                        <button className="btn" onClick={() => setView('jobs')}>💼 Carreira</button>
+                        <button className="btn" onClick={() => setView('training')}>🏋️ Treinar</button>
+                        <button className="btn" onClick={() => setView('night')}>🌃 Noite</button>
+                        <button className="btn" onClick={() => update({skin: 100, money: p.money - 100})}>🧴 Protetor</button>
+                        <button className="btn btn-age" onClick={ageUp}>PRÓXIMO ANO</button>
+                    </div>
+
+                    {view === 'jobs' && (
+                        <div className="modal">
+                            <h2>Procurar Emprego</h2>
+                            <div className="option" onClick={() => { if(p.qi > 60) { update({job: "Dev"}); setView(null); } else alert("QI baixo!"); }}>Dev Júnior (Requer 60 QI)</div>
+                            <div className="option" onClick={() => { if(p.qi > 90) { update({job: "CEO"}); setView(null); } else alert("QI insuficiente!"); }}>CEO Tech (Requer 90 QI)</div>
+                            <div className="option" onClick={() => setView(null)}>Voltar</div>
+                        </div>
+                    )}
+
+                    {view === 'training' && (
+                        <div className="modal">
+                            <h2>Desenvolvimento</h2>
+                            <div className="option" onClick={() => { update({qi: p.qi + 5, happiness: -10}); setView(null); addLog("Estudou até os olhos arderem."); }}>Estudar (+QI)</div>
+                            <div className="option" onClick={() => { update({strength: p.strength + 5, health: -5}); setView(null); addLog("Treinou pesado no escuro."); }}>Aprender Lutar (+Força)</div>
+                            <div className="option" onClick={() => setView(null)}>Voltar</div>
+                        </div>
+                    )}
+
+                    {view === 'night' && (
+                        <div className="modal">
+                            <h2>Vida Noturna</h2>
+                            <div className="option" onClick={() => { if(p.money >= 300) { update({money: -300, libido: -50, happiness: 40}); addLog("Noite de prazer em um bordel de luxo."); setView(null); } else alert("Sem grana!"); }}>Acompanhante (R$ 300)</div>
+                            <div className="option" onClick={() => { update({happiness: 20}); setView(null); addLog("Saiu para um bar."); }}>Procurar Relacionamento</div>
+                            <div className="option" onClick={() => setView(null)}>Voltar</div>
+                        </div>
+                    )}
+
+                    {view?.type === 'event' && (
+                        <div className="modal">
+                            <h2 style={{color: 'var(--danger)'}}>{view.data.t}</h2>
+                            <p>{view.data.d}</p>
+                            {view.data.o.map((o, i) => (
+                                <div key={i} className="option" onClick={() => { o.f(); setView(null); }}>{o.n}</div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
